@@ -1,67 +1,48 @@
-// src/pages/auth/Login.jsx
+// src/pages/auth/SignUp.jsx
 import React, { useState } from "react";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import {
     Grid,
     Typography,
     TextField,
     Button,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
     Box,
     Link as MuiLink,
     Paper
 } from "@mui/material";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import foto from "../assets/images/foto.jpg";
 
 
-export default function Login() {
+export default function SignUp() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [role, setRole] = useState("Mentee");
     const [error, setError] = useState("");
-    const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleSignUp = async (e) => {
         e.preventDefault();
         setError("");
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-
-            const userDocRef = doc(db, "users", user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                const role = userDocSnap.data().role;
-                if (role === "Mentor") {
-                    navigate("/mentor/profile");
-                } else if (role === "Mentee") {
-                    navigate("/mentee/profile");
-                } else {
-                    setError("Geçersiz rol.");
-                }
-            } else {
-                setError("Kullanıcı verisi bulunamadı.");
-            }
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email,
+                role,
+                createdAt: new Date(),
+            });
+            console.log("Kayıt başarılı:", user);
         } catch (err) {
-            setError("E-posta veya şifre hatalı.");
-        }
-    };
-
-    const handlePasswordReset = async () => {
-        if (!email) {
-            setError("Lütfen e-posta adresinizi girin.");
-            return;
-        }
-
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("Şifre sıfırlama e-postası gönderildi.");
-        } catch (err) {
-            setError("Şifre sıfırlama işlemi başarısız.");
-            console.error(err);
+            console.error("Firebase Hatası:", err.code, err.message);
+            setError(`Kayıt işlemi başarısız: ${err.message}`);
         }
     };
 
@@ -93,9 +74,9 @@ export default function Login() {
                     }}
                 >
                     <Typography variant="h4" gutterBottom>🧠 Mentor-Mentee Network</Typography>
-                    <Typography variant="h6" gutterBottom>Giriş Yap</Typography>
+                    <Typography variant="h6" gutterBottom>Kayıt Ol</Typography>
 
-                    <Box component="form" onSubmit={handleLogin} sx={{ mt: 1, width: '100%' }}>
+                    <Box component="form" onSubmit={handleSignUp} sx={{ mt: 1, width: '100%' }}>
                         <TextField
                             label="E-posta"
                             fullWidth
@@ -113,23 +94,23 @@ export default function Login() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 2, mb: 1, backgroundColor: "#333" }}
-                        >
-                            Giriş Yap
+
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Rol</InputLabel>
+                            <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                                <MenuItem value="Mentor">Mentor</MenuItem>
+                                <MenuItem value="Mentee">Mentee</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2, mb: 1 }}>
+                            Kayıt Ol
                         </Button>
 
-                        <MuiLink component="button" onClick={handlePasswordReset} sx={{ fontSize: 14 }}>
-                            Şifremi Unuttum
-                        </MuiLink>
-
                         <Typography sx={{ mt: 2, fontSize: 14 }}>
-                            Hesabın yok mu?{" "}
-                            <MuiLink component={Link} to="/signup">
-                                Kayıt Ol
+                            Zaten hesabın var mı?{" "}
+                            <MuiLink component={Link} to="/login">
+                                Giriş Yap
                             </MuiLink>
                         </Typography>
 
@@ -144,4 +125,6 @@ export default function Login() {
         </Grid>
     );
 }
+
+
 
