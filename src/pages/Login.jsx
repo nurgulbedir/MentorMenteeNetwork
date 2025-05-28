@@ -1,20 +1,17 @@
-// src/pages/auth/Login.jsx
 import React, { useState } from "react";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import {
-    Grid,
-    Typography,
+    Container,
     TextField,
     Button,
+    Typography,
     Box,
-    Link as MuiLink,
-    Paper
+    Paper,
+    Link,
 } from "@mui/material";
-import { useNavigate, Link } from "react-router-dom";
-import foto from "../assets/images/foto.jpg";
-
+import { getDoc, doc } from "firebase/firestore";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -27,121 +24,80 @@ export default function Login() {
         setError("");
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
             const user = userCredential.user;
 
-            const userDocRef = doc(db, "users", user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                const role = userDocSnap.data().role;
-                if (role === "Mentor") {
-                    navigate("/mentor/profile");
-                } else if (role === "Mentee") {
-                    navigate("/mentee/profile");
-                } else {
-                    setError("Geçersiz rol.");
-                }
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                const role = userDoc.data().role;
+                localStorage.setItem("role", role);
+                navigate("/home");
             } else {
-                setError("Kullanıcı verisi bulunamadı.");
+                setError("Kullanıcı rolü bulunamadı.");
             }
         } catch (err) {
-            setError("E-posta veya şifre hatalı.");
-        }
-    };
-
-    const handlePasswordReset = async () => {
-        if (!email) {
-            setError("Lütfen e-posta adresinizi girin.");
-            return;
-        }
-
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("Şifre sıfırlama e-postası gönderildi.");
-        } catch (err) {
-            setError("Şifre sıfırlama işlemi başarısız.");
+            setError("Giriş başarısız. E-posta veya şifre hatalı.");
             console.error(err);
         }
     };
 
     return (
-        <Grid container component="main" sx={{ height: "100vh" }}>
-            {/* SOL GÖRSEL */}
-            <Grid
-                item
-                xs={false}
-                sm={6}
-                md={6}
-                sx={{
-                    backgroundImage: `url(${foto})`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                }}
-            />
+        <Container maxWidth="sm">
+            <Paper elevation={3} sx={{ padding: 4, marginTop: 10 }}>
+                <Typography variant="h4" align="center" gutterBottom>
+                    Mentor-Mentee Network
+                </Typography>
+                <Typography variant="h6" align="center" gutterBottom>
+                    Giriş Yap
+                </Typography>
 
-            {/* SAĞ FORM */}
-            <Grid item xs={12} sm={6} md={6} component={Paper} elevation={6} square>
-                <Box
-                    sx={{
-                        my: 8,
-                        mx: 6,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Typography variant="h4" gutterBottom>🧠 Mentor-Mentee Network</Typography>
-                    <Typography variant="h6" gutterBottom>Giriş Yap</Typography>
-
-                    <Box component="form" onSubmit={handleLogin} sx={{ mt: 1, width: '100%' }}>
-                        <TextField
-                            label="E-posta"
-                            fullWidth
-                            margin="normal"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <TextField
-                            label="Şifre"
-                            type="password"
-                            fullWidth
-                            margin="normal"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 2, mb: 1, backgroundColor: "#333" }}
-                        >
-                            Giriş Yap
-                        </Button>
-
-                        <MuiLink component="button" onClick={handlePasswordReset} sx={{ fontSize: 14 }}>
-                            Şifremi Unuttum
-                        </MuiLink>
-
-                        <Typography sx={{ mt: 2, fontSize: 14 }}>
-                            Hesabın yok mu?{" "}
-                            <MuiLink component={Link} to="/signup">
-                                Kayıt Ol
-                            </MuiLink>
+                <Box component="form" onSubmit={handleLogin} sx={{ mt: 2 }}>
+                    <TextField
+                        label="E-posta"
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <TextField
+                        label="Şifre"
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    {error && (
+                        <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                            {error}
                         </Typography>
-
-                        {error && (
-                            <Typography color="error" sx={{ mt: 2 }}>
-                                {error}
-                            </Typography>
-                        )}
-                    </Box>
+                    )}
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ mt: 3 }}
+                    >
+                        GİRİŞ YAP
+                    </Button>
                 </Box>
-            </Grid>
-        </Grid>
+
+                <Box mt={2} textAlign="center">
+                    <Link href="/signup" underline="hover">
+                        Hesabın yok mu? Kayıt Ol
+                    </Link>
+                </Box>
+            </Paper>
+        </Container>
     );
 }
-
