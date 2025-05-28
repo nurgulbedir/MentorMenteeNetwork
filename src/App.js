@@ -7,6 +7,8 @@ import MentorProfile from "./pages/mentor/MentorProfile";
 import MenteeProfile from "./pages/mentee/MenteeProfile";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./context/AuthContext";
+import Home from "./pages/Home";
+
 
 function App() {
   return (
@@ -18,8 +20,30 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Login />} />
-            <Route path="/mentor/profile" element={<MentorProfile />} />
-            <Route path="/mentee/profile" element={<MenteeProfile />} />
+            <Route
+              path="/home"
+              element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/mentor/profile"
+              element={
+                <PrivateRoute>
+                  <MentorProfile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/mentee/profile"
+              element={
+                <PrivateRoute>
+                  <MenteeProfile />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>
