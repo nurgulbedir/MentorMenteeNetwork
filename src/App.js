@@ -1,4 +1,5 @@
 // src/App.js
+// src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignUp from "./pages/SignUp";
@@ -8,7 +9,6 @@ import MenteeProfile from "./pages/mentee/MenteeProfile";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
-
 
 function App() {
   return (
@@ -52,4 +52,3 @@ function App() {
 }
 
 export default App;
-
