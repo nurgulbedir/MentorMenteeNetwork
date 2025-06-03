@@ -31,13 +31,28 @@ export default function Login() {
             );
             const user = userCredential.user;
 
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (userDoc.exists()) {
-                const role = userDoc.data().role;
-                localStorage.setItem("role", role);
-                navigate("/home");
+            // Firestore'dan rolü al
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (!userDocSnap.exists()) {
+                setError("Rol bulunamadı. Lütfen kayıt olun.");
+                return;
+            }
+
+
+            if (userDocSnap.exists()) {
+                const role = userDocSnap.data().role;
+                localStorage.setItem("role", role); // 📌 Rolü kaydet
+                console.log("Rol kaydedildi:", role);
+
+                // Profil sayfasına yönlendir
+                if (role === "mentor") {
+                    navigate("/mentor/profile");
+                } else if (role === "mentee") {
+                    navigate("/mentee/profile");
+                }
             } else {
-                setError("Kullanıcı rolü bulunamadı.");
+                console.error("Kullanıcı belgesi bulunamadı.");
             }
         } catch (err) {
             setError("Giriş başarısız. E-posta veya şifre hatalı.");

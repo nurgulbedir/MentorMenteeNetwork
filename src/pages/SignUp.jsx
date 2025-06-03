@@ -35,8 +35,9 @@ const SignUp = () => {
 
             // Kullanıcının rolüne göre Firestore'a kayıt
             await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
                 email,
-                role,
+                role: role,
             });
 
             // Rolü localStorage'a kaydet
