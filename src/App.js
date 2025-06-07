@@ -10,6 +10,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import MenteeProfileEdit from "./pages/mentee/MenteeProfileEdit";
+import MentorProfileEdit from "./pages/mentor/MentorProfileEdit";
 
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
               }
             />
             <Route path="/mentee/profile/edit" element={<MenteeProfileEdit />} />
+            <Route path="/mentor/profile/edit" element={<MentorProfileEdit />} />
 
           </Routes>
         </div>
