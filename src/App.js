@@ -9,6 +9,8 @@ import MenteeProfile from "./pages/mentee/MenteeProfile";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
+import MenteeProfileEdit from "./pages/mentee/MenteeProfileEdit";
+
 
 function App() {
   return (
@@ -44,6 +46,8 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="/mentee/profile/edit" element={<MenteeProfileEdit />} />
+
           </Routes>
         </div>
       </Router>
