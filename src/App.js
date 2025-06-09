@@ -11,6 +11,9 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import MenteeProfileEdit from "./pages/mentee/MenteeProfileEdit";
 import MentorProfileEdit from "./pages/mentor/MentorProfileEdit";
+import MentorList from './pages/mentee/MentorList';
+import IncomingRequests from './pages/mentor/IncomingRequests';
+
 
 
 function App() {
@@ -49,6 +52,10 @@ function App() {
             />
             <Route path="/mentee/profile/edit" element={<MenteeProfileEdit />} />
             <Route path="/mentor/profile/edit" element={<MentorProfileEdit />} />
+
+            <Route path="/mentee/mentor-list" element={<MentorList />} />
+            <Route path="/mentor/incoming-requests" element={<IncomingRequests />} />
+
 
           </Routes>
         </div>

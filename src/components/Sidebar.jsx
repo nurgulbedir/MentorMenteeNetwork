@@ -4,7 +4,13 @@ import { auth } from "../firebase";
 import { List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
-import HomeIcon from "@mui/icons-material/Home"; // 🔹 yeni ikon
+import HomeIcon from "@mui/icons-material/Home";
+import { ListItemButton } from "@mui/material";
+import { Link } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
+import InboxIcon from '@mui/icons-material/Inbox';
+
+
 
 const Sidebar = () => {
     const navigate = useNavigate();
@@ -47,6 +53,25 @@ const Sidebar = () => {
                     </ListItemIcon>
                     <ListItemText primary="Profilim" />
                 </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/mentee/mentor-list">
+                        <ListItemIcon>
+                            <SearchIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Mentor Bul" />
+                    </ListItemButton>
+                </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/mentor/incoming-requests">
+                        <ListItemIcon>
+                            <InboxIcon /> {/* veya farklı bir icon kullanabilirsin */}
+                        </ListItemIcon>
+                        <ListItemText primary="Gelen Talepler" />
+                    </ListItemButton>
+                </ListItem>
+
 
                 <ListItem button onClick={handleLogout}>
                     <ListItemIcon>
