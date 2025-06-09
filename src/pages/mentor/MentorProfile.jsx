@@ -1,123 +1,225 @@
-// src/pages/mentor/MentorProfile.jsx
-
 import React, { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
-import { Button, Card, CardContent, Typography, Chip, Stack } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import {
+  Edit as EditIcon,
+  LinkedIn,
+  GitHub,
+  Language,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
-const MentorProfile = () => {
-    const { currentUser } = useAuth();
-    const [profileData, setProfileData] = useState({});
-    const navigate = useNavigate();
+const SIDEBAR_WIDTH = 240; // Sidebar genişliği
+const HERO_HEIGHT = 110; // İnceltilmiş bar yüksekliği
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const docRef = doc(db, "users", currentUser.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setProfileData(docSnap.data());
-                }
-            } catch (error) {
-                console.error("Profil verisi çekilirken hata:", error);
-            }
-        };
-        fetchProfile();
-    }, [currentUser]);
+export default function MentorProfile() {
+  const { currentUser } = useAuth();
+  const [profileData, setProfileData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!currentUser) return;
+    (async () => {
+      const ref = doc(db, "users", currentUser.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) setProfileData(snap.data());
+      setLoading(false);
+    })();
+  }, [currentUser]);
+
+  if (loading)
     return (
-        <div style={{ display: "flex" }}>
-            <Sidebar />
-            <div style={{ flex: 1, padding: "20px" }}>
-                <Typography variant="h4" gutterBottom>
-                    Mentor Profil Sayfası
-                </Typography>
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate("/mentor/profile/edit")}
-                    style={{ marginBottom: "20px" }}
-                >
-                    Profili Düzenle
-                </Button>
-
-                <Card variant="outlined">
-                    <CardContent>
-                        <Typography variant="h6">Ad Soyad:</Typography>
-                        <Typography gutterBottom>{profileData.fullName}</Typography>
-
-                        <Typography variant="h6">Mentor Türü:</Typography>
-                        <Typography gutterBottom>{profileData.mentorType}</Typography>
-
-                        <Typography variant="h6">Uzmanlık Alanları:</Typography>
-                        <Stack direction="row" spacing={1} mb={2}>
-                            {profileData.expertiseAreas?.map((area, index) => (
-                                <Chip key={index} label={area} />
-                            ))}
-                        </Stack>
-
-                        <Typography variant="h6">Teknik Yetkinlikler:</Typography>
-                        <Stack direction="row" spacing={1} mb={2}>
-                            {profileData.technicalSkills?.map((skill, index) => (
-                                <Chip key={index} label={skill} />
-                            ))}
-                        </Stack>
-
-                        <Typography variant="h6">Eğitim Geçmişi:</Typography>
-                        <Typography gutterBottom>{profileData.education}</Typography>
-
-                        <Typography variant="h6">Deneyim Süresi:</Typography>
-                        <Typography gutterBottom>{profileData.experienceYears} yıl</Typography>
-
-                        <Typography variant="h6">Hakkımda:</Typography>
-                        <Typography gutterBottom>{profileData.bio}</Typography>
-
-                        <Typography variant="h6">Mentorluk Sunabileceği Konular:</Typography>
-                        <Stack direction="row" spacing={1} mb={2}>
-                            {profileData.mentoringTopics?.map((topic, index) => (
-                                <Chip key={index} label={topic} />
-                            ))}
-                        </Stack>
-
-                        <Typography variant="h6">Mentorluk Tarzı:</Typography>
-                        <Typography gutterBottom>{profileData.mentoringStyle}</Typography>
-
-                        <Typography variant="h6">Ulaşılabilirlik Saatleri:</Typography>
-                        <Typography gutterBottom>{profileData.availability}</Typography>
-
-                        <Typography variant="h6">İletişim Tercihleri:</Typography>
-                        <Typography gutterBottom>{profileData.communicationPreferences}</Typography>
-
-                        <Typography variant="h6">Mentorluk Sıklığı:</Typography>
-                        <Typography gutterBottom>{profileData.mentoringFrequency}</Typography>
-
-                        <Typography variant="h6">LinkedIn:</Typography>
-                        <Typography gutterBottom>{profileData.linkedin}</Typography>
-
-                        <Typography variant="h6">GitHub:</Typography>
-                        <Typography gutterBottom>{profileData.github}</Typography>
-
-                        <Typography variant="h6">Web Sitesi:</Typography>
-                        <Typography gutterBottom>{profileData.website}</Typography>
-
-                        <Typography variant="h6">Eşleşmelere Açık mı?:</Typography>
-                        <Typography gutterBottom>{profileData.openToMatching ? "Evet" : "Hayır"}</Typography>
-
-                        <Typography variant="h6">Şehir / Ülke:</Typography>
-                        <Typography gutterBottom>{profileData.location}</Typography>
-
-                        <Typography variant="h6">Daha önce mentorluk yaptığı kişi sayısı:</Typography>
-                        <Typography gutterBottom>{profileData.previousMentees}</Typography>
-
-                        <Typography variant="h6">Puanlama:</Typography>
-                        <Typography gutterBottom>{profileData.rating}</Typography>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+      <Sidebar>
+        <p>Yükleniyor…</p>
+      </Sidebar>
     );
-};
 
-export default MentorProfile;
+  /* ---------- Yardımcı label ---------- */
+  const Label = ({ children }) => (
+    <Typography sx={{ color: "text.secondary", fontWeight: 500 }}>
+      {children}
+    </Typography>
+  );
+
+  return (
+    <div style={{ display: "flex" }}>
+      <Sidebar />
+
+      {/* İNCELTİLMİŞ GRADYAN BAR */}
+      <Box
+        sx={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: HERO_HEIGHT,
+          background: "linear-gradient(135deg, #1976d2 0%, #673ab7 100%)",
+          zIndex: -1,
+        }}
+      />
+
+      {/* PROFİL KARTI */}
+      <Card
+        sx={{
+          flex: 1,
+          mx: "auto",
+          mt: 6, // bar inceldiği için 6 spacing (~48 px)
+          p: 4,
+          maxWidth: 1000,
+          borderRadius: 3,
+          boxShadow: 4,
+        }}
+      >
+        <Stack direction="row" justifyContent="flex-end">
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => navigate("/mentor/profile/edit")}
+          >
+            Profili Düzenle
+          </Button>
+        </Stack>
+
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* Sol kolon – avatar & başlık */}
+          <Grid item xs={12} md={4} sx={{ textAlign: "center" }}>
+            <Avatar
+              src={profileData.profilePhotoUrl || undefined}
+              sx={{ width: 140, height: 140, mx: "auto", mb: 2 }}
+            />
+            <Typography variant="h5" fontWeight={600}>
+              {profileData.fullName}
+            </Typography>
+            <Typography>
+              {profileData.title}
+              {profileData.organization && ` @ ${profileData.organization}`}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              {profileData.mentorType}
+            </Typography>
+
+            <Stack direction="row" spacing={1} justifyContent="center">
+              {profileData.linkedin && (
+                <Tooltip title="LinkedIn">
+                  <IconButton
+                    component="a"
+                    href={profileData.linkedin}
+                    target="_blank"
+                  >
+                    <LinkedIn />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {profileData.github && (
+                <Tooltip title="GitHub">
+                  <IconButton
+                    component="a"
+                    href={profileData.github}
+                    target="_blank"
+                  >
+                    <GitHub />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {profileData.website && (
+                <Tooltip title="Web">
+                  <IconButton
+                    component="a"
+                    href={profileData.website}
+                    target="_blank"
+                  >
+                    <Language />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+          </Grid>
+
+          {/* Sağ kolon – içerik */}
+          <Grid item xs={12} md={8}>
+            <Label>Hakkımda</Label>
+            <Typography sx={{ mb: 2 }}>{profileData.bio || "—"}</Typography>
+
+            <Divider sx={{ my: 1 }} />
+            <Grid container spacing={1}>
+              {[
+                ["Uzmanlık Alanları", "expertiseAreas"],
+                ["Teknik Yetkinlikler", "technicalSkills"],
+              ].map(([title, field]) => (
+                <Grid key={field} item xs={12}>
+                  <Label>{title}</Label>
+                  <Stack
+                    direction="row"
+                    flexWrap="wrap"
+                    gap={1}
+                    sx={{ mt: 0.5 }}
+                  >
+                    {profileData[field]?.length ? (
+                      profileData[field].map((v) => (
+                        <Chip key={v} label={v} color="primary" />
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">
+                        —
+                      </Typography>
+                    )}
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Divider sx={{ my: 2 }} />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Label>Eğitim</Label>
+                <Typography>{profileData.education || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Deneyim</Label>
+                <Typography>
+                  {profileData.experienceYears
+                    ? `${profileData.experienceYears} yıl`
+                    : "—"}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Mentorluk Tarzı</Label>
+                <Typography>{profileData.mentoringStyle || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Mentorluk Sıklığı</Label>
+                <Typography>{profileData.mentoringFrequency || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Ulaşılabilirlik</Label>
+                <Typography>{profileData.availability || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>İletişim Tercihi</Label>
+                <Typography>
+                  {profileData.communicationPreferences || "—"}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Card>
+    </div>
+  );
+}
