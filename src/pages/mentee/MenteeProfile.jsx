@@ -1,105 +1,232 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
-import { Button, Card, CardContent, Typography, Avatar, Chip, Stack } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import {
+  Edit as EditIcon,
+  GitHub,
+  Language,
+  Link as LinkIcon,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
-const MenteeProfile = () => {
-    const { currentUser } = useAuth();
-    const [userData, setUserData] = useState(null);
-    const navigate = useNavigate(); // 
+/* -------- Görsel ayarlar -------- */
+const SIDEBAR_WIDTH = 240;
+const HERO_HEIGHT = 110; // ince şerit yüksekliği
+const GRADIENT = "linear-gradient(135deg, #1976d2 0%, #673ab7 100%)";
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            if (currentUser) {
-                const docRef = doc(db, "users", currentUser.uid);
-                const docSnap = await getDoc(docRef);
+export default function MenteeProfile() {
+  const { currentUser } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const theme = useTheme();
 
+  /* -------- Firestore verisi -------- */
+  useEffect(() => {
+    if (!currentUser) return;
+    (async () => {
+      try {
+        const ref = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) setData(snap.data());
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [currentUser]);
 
-                if (docSnap.exists()) {
-                    setUserData(docSnap.data());
-                }
-            }
-        };
-
-        fetchUserData();
-    }, [currentUser]);
-
+  if (loading)
     return (
-        <div style={{ display: "flex" }}>
-            <Sidebar />
-
-            <div style={{ flex: 1, padding: "2rem" }}>
-                <Typography variant="h4" gutterBottom>
-                    Mentee Profil Sayfası
-                </Typography>
-
-                {/* 🚩 Düzenle butonu */}
-                <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => navigate("/mentee/profile/edit")}
-                    sx={{ mb: 2 }}
-                >
-                    Profili Düzenle
-                </Button>
-
-                {userData ? (
-                    <Card sx={{ maxWidth: 800, padding: 3 }}>
-                        <CardContent>
-                            <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-                                <Avatar
-                                    src={userData.profilePhotoUrl || ""}
-                                    alt={userData.fullName}
-                                    sx={{ width: 80, height: 80 }}
-                                />
-                                <Typography variant="h5">{userData.fullName}</Typography>
-                            </Stack>
-
-                            <Typography><strong>Öğrencilik Durumu:</strong> {userData.studentStatus}</Typography>
-                            <Typography><strong>Bölüm / Okul / Mezuniyet Yılı:</strong> {userData.department} / {userData.school} / {userData.graduationYear}</Typography>
-
-                            <Typography mt={2}><strong>İlgi Alanları:</strong></Typography>
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                {userData.interestTags?.map((tag, index) => (
-                                    <Chip key={index} label={tag} />
-                                ))}
-                            </Stack>
-
-                            <Typography mt={2}><strong>Teknik Bilgi / Bildiği Diller:</strong></Typography>
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                {userData.knownTechnologies?.map((tech, index) => (
-                                    <Chip key={index} label={tech} />
-                                ))}
-                            </Stack>
-
-                            <Typography mt={2}><strong>Kendini Tanıtan Kısa Biyografi:</strong></Typography>
-                            <Typography>{userData.bio}</Typography>
-
-                            <Typography mt={2}><strong>Mentorlukta Ne Arıyor?:</strong> {userData.mentorshipNeeds?.join(", ")}</Typography>
-
-                            <Typography mt={2}><strong>Projeler / Etkinlikler / Yarışmalar:</strong> {userData.projects}</Typography>
-                            <Typography mt={2}><strong>CV / Portfolyo:</strong> <a href={userData.portfolioUrl} target="_blank" rel="noopener noreferrer">{userData.portfolioUrl}</a></Typography>
-                            <Typography mt={2}><strong>Ulaşılabilirlik Saatleri / Günleri:</strong> {userData.availability}</Typography>
-                            <Typography mt={2}><strong>İletişim Tercihleri:</strong> {userData.contactPreference}</Typography>
-                            <Typography mt={2}><strong>Geliştirmek İstediği Alanlar:</strong> {userData.areasToImprove?.join(", ")}</Typography>
-                            <Typography mt={2}><strong>Hedeflediği Kariyer Yolu:</strong> {userData.careerGoal}</Typography>
-                            <Typography mt={2}><strong>Daha önce aldığı mentorluk var mı?:</strong> {userData.hasPreviousMentorship ? "Evet" : "Hayır"}</Typography>
-                            <Typography mt={2}><strong>Eşleşmelere Açık mı?:</strong> {userData.isAvailableForMatch ? "Evet" : "Hayır"}</Typography>
-                            <Typography mt={2}><strong>Zaman dilimi / Şehir:</strong> {userData.location}</Typography>
-                            <Typography mt={2}><strong>Mentor profillerinde hangi özellikleri arıyor?:</strong> {userData.preferredMentorFeatures?.join(", ")}</Typography>
-
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Typography>Yükleniyor...</Typography>
-                )}
-            </div>
-        </div>
+      <Sidebar>
+        <p>Yükleniyor…</p>
+      </Sidebar>
     );
-};
+  if (!data)
+    return (
+      <Sidebar>
+        <p>Profil verisi bulunamadı.</p>
+      </Sidebar>
+    );
 
-export default MenteeProfile;
+  /* -------- Yardımcı label -------- */
+  const Label = ({ children }) => (
+    <Typography sx={{ color: "text.secondary", fontWeight: 500 }}>
+      {children}
+    </Typography>
+  );
 
+  return (
+    <div style={{ display: "flex" }}>
+      <Sidebar />
+
+      {/* İnce gradyan bar */}
+      <Box
+        sx={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: HERO_HEIGHT,
+          background: GRADIENT,
+          zIndex: -1,
+        }}
+      />
+
+      {/* Profil kartı */}
+      <Card
+        sx={{
+          flex: 1,
+          mx: "auto",
+          mt: 6,
+          p: 4,
+          maxWidth: 1000,
+          borderRadius: 3,
+          boxShadow: 4,
+          backgroundColor: theme.palette.background.paper,
+        }}
+      >
+        <Stack direction="row" justifyContent="flex-end">
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => navigate("/mentee/profile/edit")}
+          >
+            Profili Düzenle
+          </Button>
+        </Stack>
+
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* -------- Sol kolon -------- */}
+          <Grid item xs={12} md={4} sx={{ textAlign: "center" }}>
+            <Avatar
+              src={data.profilePhotoUrl || undefined}
+              alt={data.fullName || "avatar"}
+              sx={{ width: 140, height: 140, mx: "auto", mb: 2 }}
+            />
+            <Typography variant="h5" fontWeight={600}>
+              {data.fullName}
+            </Typography>
+            <Typography>
+              {data.department && `${data.department} / `}
+              {data.school}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              {data.studentStatus}
+            </Typography>
+
+            {/* Sosyal / Portfolio ikonları */}
+            <Stack direction="row" spacing={1} justifyContent="center">
+              {data.github && (
+                <Tooltip title="GitHub">
+                  <IconButton component="a" href={data.github} target="_blank">
+                    <GitHub />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {data.portfolioUrl && (
+                <Tooltip title="Portfolyo">
+                  <IconButton
+                    component="a"
+                    href={data.portfolioUrl}
+                    target="_blank"
+                  >
+                    <Language />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {data.cvUrl && (
+                <Tooltip title="CV">
+                  <IconButton component="a" href={data.cvUrl} target="_blank">
+                    <LinkIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+          </Grid>
+
+          {/* -------- Sağ kolon -------- */}
+          <Grid item xs={12} md={8}>
+            <Label>Kısa Biyografi</Label>
+            <Typography sx={{ mb: 2 }}>{data.bio || "—"}</Typography>
+
+            <Divider sx={{ my: 1 }} />
+            <Grid container spacing={1}>
+              {[
+                ["İlgi Alanları", "interestTags"],
+                ["Bildikleri Teknolojiler", "knownTechnologies"],
+                ["Geliştirmek İstediği Alanlar", "areasToImprove"],
+                ["Mentorlukta Aradığı Konular", "mentorshipNeeds"],
+              ].map(([title, field]) => (
+                <Grid key={field} item xs={12}>
+                  <Label>{title}</Label>
+                  <Stack
+                    direction="row"
+                    flexWrap="wrap"
+                    gap={1}
+                    sx={{ mt: 0.5 }}
+                  >
+                    {data[field]?.length ? (
+                      data[field].map((v) => (
+                        <Chip key={v} label={v} color="primary" />
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">
+                        —
+                      </Typography>
+                    )}
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Divider sx={{ my: 2 }} />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Label>Mezuniyet Yılı</Label>
+                <Typography>{data.graduationYear || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Kariyer Hedefi</Label>
+                <Typography>{data.careerGoal || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Daha önce Mentorluk Aldı mı?</Label>
+                <Typography>
+                  {data.hasPreviousMentorship ? "Evet" : "Hayır"}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Ulaşılabilirlik</Label>
+                <Typography>{data.availability || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>İletişim Tercihi</Label>
+                <Typography>{data.contactPreference || "—"}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Label>Lokasyon</Label>
+                <Typography>{data.location || "—"}</Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Card>
+    </div>
+  );
+}
