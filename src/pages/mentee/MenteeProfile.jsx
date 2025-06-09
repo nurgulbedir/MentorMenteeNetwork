@@ -26,7 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 /* -------- Görsel ayarlar -------- */
-const SIDEBAR_WIDTH = 240;
+
 const HERO_HEIGHT = 110; // ince şerit yüksekliği
 const GRADIENT = "linear-gradient(135deg, #1976d2 0%, #673ab7 100%)";
 

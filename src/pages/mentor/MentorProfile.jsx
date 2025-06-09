@@ -24,7 +24,6 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
-const SIDEBAR_WIDTH = 240; // Sidebar genişliği
 const HERO_HEIGHT = 110; // İnceltilmiş bar yüksekliği
 
 export default function MentorProfile() {
