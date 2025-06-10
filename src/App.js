@@ -13,6 +13,7 @@ import MenteeProfileEdit from "./pages/mentee/MenteeProfileEdit";
 import MentorProfileEdit from "./pages/mentor/MentorProfileEdit";
 import MentorList from './pages/mentee/MentorList';
 import IncomingRequests from './pages/mentor/IncomingRequests';
+import MenteeProfileView from "./pages/mentee/MenteeProfileView";
 
 
 
@@ -55,6 +56,21 @@ function App() {
 
             <Route path="/mentee/mentor-list" element={<MentorList />} />
             <Route path="/mentor/incoming-requests" element={<IncomingRequests />} />
+
+            <Route path="/mentor/mentee-profile/:menteeID" element={<MenteeProfileView />} />
+
+
+            <Route path="/mentor/incoming-requests" element={<IncomingRequests />} />
+            <Route
+              path="/mentor/mentee-profile/:menteeId"
+              element={
+                <PrivateRoute>
+                  <MenteeProfile />
+                </PrivateRoute>
+              }
+            />
+
+
 
 
           </Routes>

@@ -1,34 +1,74 @@
 // src/pages/mentee/MentorList.jsx
-
-import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { useAuth } from '../../context/AuthContext';
+import React, { useEffect, useState } from "react";
 import {
-    Button,
+    Box,
+    Typography,
     Card,
     CardContent,
-    Typography,
     TextField,
+    Grid,
+    Avatar,
     Chip,
-    Box,
-} from '@mui/material';
+    Button,
+} from "@mui/material";
+import {
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    addDoc,
+    serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 
-export default function MentorList() {
+const MentorList = () => {
     const { currentUser } = useAuth();
     const [mentors, setMentors] = useState([]);
-    const [filterSkill, setFilterSkill] = useState('');
-    const [filterArea, setFilterArea] = useState('');
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const fetchMentors = async () => {
-            const q = query(collection(db, 'users'), where('role', '==', 'mentor'));
-            const querySnapshot = await getDocs(q);
-            const mentorData = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setMentors(mentorData);
+            try {
+                const usersRef = collection(db, "users");
+                const qSnapshot = await getDocs(usersRef);
+
+                const mentorData = await Promise.all(
+                    qSnapshot.docs
+                        .filter((docSnapshot) => docSnapshot.data().role === "mentor")
+                        .map(async (docSnapshot) => {
+                            const userData = docSnapshot.data();
+
+                            const mentorProfileRef = doc(
+                                db,
+                                "users",
+                                docSnapshot.id,
+                                "mentorProfile",
+                                "profile"
+                            );
+                            const mentorProfileSnap = await getDoc(mentorProfileRef);
+
+                            const profileData = mentorProfileSnap.exists()
+                                ? mentorProfileSnap.data()
+                                : {};
+
+                            return {
+                                id: docSnapshot.id,
+                                email: userData.email || "",
+                                name: profileData.name || "",
+                                profilePhoto: profileData.profilePhoto || "",
+                                mentorType: profileData.mentorType || "",
+                                expertiseAreas: profileData.expertiseAreas || [],
+                                technicalSkills: profileData.technicalSkills || [],
+                                about: profileData.about || "",
+                            };
+                        })
+                );
+
+                setMentors(mentorData);
+            } catch (error) {
+                console.error("Mentorları çekerken hata oluştu:", error);
+            }
         };
 
         fetchMentors();
@@ -36,87 +76,106 @@ export default function MentorList() {
 
     const handleSendRequest = async (mentorId) => {
         try {
-            await addDoc(collection(db, 'matchRequests'), {
+            // GÜNCELLENEN KISIM: matchRequests koleksiyonuna gönderiyoruz ✅
+            await addDoc(collection(db, "matchRequests"), {
                 mentorID: mentorId,
                 menteeID: currentUser.uid,
-                status: 'pending',
+                menteeName: currentUser.displayName || currentUser.email || "Unknown",
+                status: "pending",
                 createdAt: serverTimestamp(),
             });
-
-            alert('Eşleşme talebi gönderildi!');
+            alert("Eşleşme talebi gönderildi!");
         } catch (error) {
-            console.error('Eşleşme talebi gönderilirken hata:', error);
+            console.error("Eşleşme talebi gönderilirken hata:", error);
         }
     };
 
-    const filteredMentors = mentors.filter((mentor) => {
-        const matchesSkill = filterSkill
-            ? mentor.technicalSkills?.some((skill) =>
-                skill.toLowerCase().includes(filterSkill.toLowerCase())
-            )
-            : true;
-
-        const matchesArea = filterArea
-            ? mentor.specializationAreas?.some((area) =>
-                area.toLowerCase().includes(filterArea.toLowerCase())
-            )
-            : true;
-
-        return matchesSkill && matchesArea;
-    });
+    const filteredMentors = mentors.filter((mentor) =>
+        mentor.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box p={3}>
             <Typography variant="h4" gutterBottom>
-                Mentor Listesi
+                Mentor Ara
             </Typography>
-
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                <TextField
-                    label="Teknik Yetenek Filtresi"
-                    value={filterSkill}
-                    onChange={(e) => setFilterSkill(e.target.value)}
-                />
-                <TextField
-                    label="Uzmanlık Alanı Filtresi"
-                    value={filterArea}
-                    onChange={(e) => setFilterArea(e.target.value)}
-                />
-            </Box>
-
-            {filteredMentors.map((mentor) => (
-                <Card key={mentor.id} sx={{ mb: 2 }}>
-                    <CardContent>
-                        <Typography variant="h6">{mentor.fullName}</Typography>
-                        <Typography variant="body2">{mentor.professionTitle}</Typography>
-                        <Typography variant="body2">
-                            Mentor Türü: {mentor.mentorType}
-                        </Typography>
-
-                        <Box sx={{ mt: 1 }}>
-                            <Typography variant="subtitle2">Uzmanlık Alanları:</Typography>
-                            {mentor.specializationAreas?.map((area, index) => (
-                                <Chip key={index} label={area} sx={{ mr: 1, mb: 1 }} />
-                            ))}
-                        </Box>
-
-                        <Box sx={{ mt: 1 }}>
-                            <Typography variant="subtitle2">Teknik Yetenekler:</Typography>
-                            {mentor.technicalSkills?.map((skill, index) => (
-                                <Chip key={index} label={skill} sx={{ mr: 1, mb: 1 }} />
-                            ))}
-                        </Box>
-
-                        <Button
-                            variant="contained"
-                            sx={{ mt: 2 }}
-                            onClick={() => handleSendRequest(mentor.id)}
+            <TextField
+                label="Mentor Ara"
+                variant="outlined"
+                fullWidth
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ mb: 3 }}
+            />
+            <Grid container spacing={2}>
+                {filteredMentors.map((mentor) => (
+                    <Grid item xs={12} sm={6} md={4} key={mentor.id}>
+                        <Card
+                            sx={{
+                                height: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                            }}
                         >
-                            Eşleşme Talebi Gönder
-                        </Button>
-                    </CardContent>
-                </Card>
-            ))}
+                            <CardContent>
+                                <Box display="flex" alignItems="center" mb={2}>
+                                    <Avatar
+                                        src={mentor.profilePhoto}
+                                        alt={mentor.name}
+                                        sx={{ width: 56, height: 56, mr: 2 }}
+                                    />
+                                    <Box>
+                                        <Typography variant="h6">{mentor.name}</Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {mentor.email}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {mentor.mentorType}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <Typography variant="subtitle2">Uzmanlık Alanları:</Typography>
+                                <Box mb={1}>
+                                    {mentor.expertiseAreas.map((area, index) => (
+                                        <Chip key={index} label={area} sx={{ mr: 0.5, mb: 0.5 }} />
+                                    ))}
+                                </Box>
+                                <Typography variant="subtitle2">Teknik Yetenekler:</Typography>
+                                <Box mb={1}>
+                                    {mentor.technicalSkills.map((skill, index) => (
+                                        <Chip key={index} label={skill} sx={{ mr: 0.5, mb: 0.5 }} />
+                                    ))}
+                                </Box>
+                                <Typography variant="subtitle2">Hakkında:</Typography>
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    {mentor.about}
+                                </Typography>
+
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleSendRequest(mentor.id)}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Eşleşme İsteği Gönder
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() =>
+                                        (window.location.href = `/mentor/profile/${mentor.id}`)
+                                    }
+                                >
+                                    Profili Gör
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
         </Box>
     );
-}
+};
+
+export default MentorList;
+
