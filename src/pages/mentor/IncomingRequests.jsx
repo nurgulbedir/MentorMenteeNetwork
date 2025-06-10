@@ -1,6 +1,5 @@
 // src/pages/mentor/IncomingRequests.jsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
     collection,
     query,
@@ -9,16 +8,16 @@ import {
     updateDoc,
     doc,
     onSnapshot,
-} from 'firebase/firestore';
-import { db } from '../../firebase';
-import { useAuth } from '../../context/AuthContext';
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 import {
     Box,
     Button,
     Card,
     CardContent,
     Typography,
-} from '@mui/material';
+} from "@mui/material";
 
 export default function IncomingRequests() {
     const { currentUser } = useAuth();
@@ -27,11 +26,7 @@ export default function IncomingRequests() {
     useEffect(() => {
         if (!currentUser?.uid) return;
 
-        const q = query(
-            collection(db, 'matchRequests'),
-            where('mentorID', '==', currentUser.uid),
-            where('status', '==', 'pending')
-        );
+        const q = collection(db, "mentorRequests", currentUser.uid, "requests");
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requestData = snapshot.docs.map((doc) => ({
@@ -46,13 +41,13 @@ export default function IncomingRequests() {
 
     const handleUpdateStatus = async (requestId, newStatus) => {
         try {
-            const requestRef = doc(db, 'matchRequests', requestId);
+            const requestRef = doc(db, "mentorRequests", currentUser.uid, "requests", requestId);
             await updateDoc(requestRef, {
                 status: newStatus,
             });
             alert(`Talep ${newStatus === 'accepted' ? 'kabul edildi' : 'reddedildi'}!`);
         } catch (error) {
-            console.error('Durum güncellenirken hata:', error);
+            console.error("Durum güncellenirken hata:", error);
         }
     };
 
@@ -71,6 +66,9 @@ export default function IncomingRequests() {
                             <Typography variant="body1">
                                 <strong>Mentee ID:</strong> {request.menteeID}
                             </Typography>
+                            <Typography variant="body1">
+                                <strong>Mentee Adı:</strong> {request.menteeName}
+                            </Typography>
                             <Typography variant="body2">
                                 <strong>Durum:</strong> {request.status}
                             </Typography>
@@ -80,14 +78,14 @@ export default function IncomingRequests() {
                                     variant="contained"
                                     color="success"
                                     sx={{ mr: 2 }}
-                                    onClick={() => handleUpdateStatus(request.id, 'accepted')}
+                                    onClick={() => handleUpdateStatus(request.id, "accepted")}
                                 >
                                     Kabul Et
                                 </Button>
                                 <Button
                                     variant="contained"
                                     color="error"
-                                    onClick={() => handleUpdateStatus(request.id, 'rejected')}
+                                    onClick={() => handleUpdateStatus(request.id, "rejected")}
                                 >
                                     Reddet
                                 </Button>
@@ -99,3 +97,4 @@ export default function IncomingRequests() {
         </Box>
     );
 }
+
