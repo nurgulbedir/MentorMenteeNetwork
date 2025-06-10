@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
     Button,
     Card,
@@ -12,6 +13,7 @@ import {
     TextField,
     Chip,
     Box,
+    Stack,
 } from '@mui/material';
 
 export default function MentorList() {
@@ -19,6 +21,7 @@ export default function MentorList() {
     const [mentors, setMentors] = useState([]);
     const [filterSkill, setFilterSkill] = useState('');
     const [filterArea, setFilterArea] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchMentors = async () => {
@@ -47,6 +50,10 @@ export default function MentorList() {
         } catch (error) {
             console.error('Eşleşme talebi gönderilirken hata:', error);
         }
+    };
+
+    const handleGiveFeedback = (mentorId) => {
+        navigate(`/feedback/${mentorId}`);
     };
 
     const filteredMentors = mentors.filter((mentor) => {
@@ -107,13 +114,20 @@ export default function MentorList() {
                             ))}
                         </Box>
 
-                        <Button
-                            variant="contained"
-                            sx={{ mt: 2 }}
-                            onClick={() => handleSendRequest(mentor.id)}
-                        >
-                            Eşleşme Talebi Gönder
-                        </Button>
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                            <Button
+                                variant="contained"
+                                onClick={() => handleSendRequest(mentor.id)}
+                            >
+                                Eşleşme Talebi Gönder
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                onClick={() => handleGiveFeedback(mentor.id)}
+                            >
+                                Geri Bildirim Ver
+                            </Button>
+                        </Stack>
                     </CardContent>
                 </Card>
             ))}
