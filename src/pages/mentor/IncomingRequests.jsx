@@ -1,59 +1,69 @@
-// src/pages/mentor/IncomingRequests.jsx
 import React, { useEffect, useState } from "react";
+import {
+    Card,
+    CardContent,
+    Typography,
+    Button,
+    Stack,
+    Divider,
+    Container,
+} from "@mui/material";
+import { db } from "../../firebase";
 import {
     collection,
     query,
     where,
-    getDocs,
-    updateDoc,
-    doc,
     onSnapshot,
+    doc,
+    updateDoc,
 } from "firebase/firestore";
-import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Typography,
-} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
-export default function IncomingRequests() {
-    const { currentUser } = useAuth();
+const IncomingRequests = () => {
     const [requests, setRequests] = useState([]);
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!currentUser?.uid) return;
+        if (!currentUser) return;
 
-        const q = collection(db, "mentorRequests", currentUser.uid, "requests");
+        const q = query(
+            collection(db, "matchRequests"),
+            where("mentorID", "==", currentUser.uid),
+            where("status", "==", "pending")
+        );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const requestData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setRequests(requestData);
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const requestList = [];
+            querySnapshot.forEach((doc) => {
+                requestList.push({ id: doc.id, ...doc.data() });
+            });
+            setRequests(requestList);
         });
 
         return () => unsubscribe();
-    }, [currentUser?.uid]);
+    }, [currentUser]);
 
-    const handleUpdateStatus = async (requestId, newStatus) => {
-        try {
-            const requestRef = doc(db, "mentorRequests", currentUser.uid, "requests", requestId);
-            await updateDoc(requestRef, {
-                status: newStatus,
-            });
-            alert(`Talep ${newStatus === 'accepted' ? 'kabul edildi' : 'reddedildi'}!`);
-        } catch (error) {
-            console.error("Durum güncellenirken hata:", error);
-        }
+    const handleAccept = async (requestId) => {
+        await updateDoc(doc(db, "matchRequests", requestId), {
+            status: "accepted",
+        });
+    };
+
+    const handleReject = async (requestId) => {
+        await updateDoc(doc(db, "matchRequests", requestId), {
+            status: "rejected",
+        });
+    };
+
+    const handleViewProfile = (menteeID) => {
+        navigate(`/mentor/mentee-profile/${menteeID}`);
     };
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom>
+        <Container maxWidth="md">
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
                 Gelen Eşleşme Talepleri
             </Typography>
 
@@ -61,40 +71,61 @@ export default function IncomingRequests() {
                 <Typography>Şu anda bekleyen talep yok.</Typography>
             ) : (
                 requests.map((request) => (
-                    <Card key={request.id} sx={{ mb: 2 }}>
+                    <Card key={request.id} variant="outlined" sx={{ mb: 3 }}>
                         <CardContent>
-                            <Typography variant="body1">
-                                <strong>Mentee ID:</strong> {request.menteeID}
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                Mentee ID:
                             </Typography>
-                            <Typography variant="body1">
-                                <strong>Mentee Adı:</strong> {request.menteeName}
-                            </Typography>
-                            <Typography variant="body2">
-                                <strong>Durum:</strong> {request.status}
+                            <Typography color="text.secondary" gutterBottom>
+                                {request.menteeID}
                             </Typography>
 
-                            <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                Durum:
+                            </Typography>
+                            <Typography gutterBottom>{request.status}</Typography>
+
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                Gönderim Tarihi:
+                            </Typography>
+                            <Typography gutterBottom>
+                                {request.createdAt?.seconds
+                                    ? new Date(request.createdAt.seconds * 1000).toLocaleString()
+                                    : "-"}
+                            </Typography>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <Stack direction="row" spacing={2}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => handleViewProfile(request.menteeID)}
+                                >
+                                    Profilini Gör
+                                </Button>
                                 <Button
                                     variant="contained"
                                     color="success"
-                                    sx={{ mr: 2 }}
-                                    onClick={() => handleUpdateStatus(request.id, "accepted")}
+                                    onClick={() => handleAccept(request.id)}
                                 >
                                     Kabul Et
                                 </Button>
                                 <Button
                                     variant="contained"
                                     color="error"
-                                    onClick={() => handleUpdateStatus(request.id, "rejected")}
+                                    onClick={() => handleReject(request.id)}
                                 >
                                     Reddet
                                 </Button>
-                            </Box>
+                            </Stack>
                         </CardContent>
                     </Card>
                 ))
             )}
-        </Box>
+        </Container>
     );
-}
+};
+
+export default IncomingRequests;
+
 
