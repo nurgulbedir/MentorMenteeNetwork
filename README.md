@@ -1,4 +1,4 @@
-# 🤝 Mentor-Mentee NetworkAdd commentMore actions
+# 🤝 Mentor-Mentee Network
 
 Fırsat eşitliğini önceleyen, etkileşimi ve gelişimi odağına alan dijital bir mentorluk ağı.
 
